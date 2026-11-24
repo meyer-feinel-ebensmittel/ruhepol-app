@@ -32,30 +32,95 @@
   <link rel="stylesheet" href="css/ruhepol.css">
   <!-- Setzt die gewählte Farbwelt, bevor etwas gezeichnet wird (kein kurzes Aufblitzen). -->
   <script src="js/farbwelt-frueh.js"></script>
-  <script src="js/app.js" defer></script>
+  <script type="module" src="js/app.js"></script>
 </head>
 <body>
 
   <!-- ============ Ansicht: Start ============ -->
-  <main class="ansicht" id="start" data-ansicht="start" aria-labelledby="start-titel">
-    <p class="wortmarke">RUHEPOL</p>
+  <main class="ansicht ansicht-start" id="start" data-ansicht="start" aria-labelledby="start-titel">
+    <header class="start-kopf">
+      <span class="kopf-platz" aria-hidden="true"></span>
+      <h1 id="start-titel" class="wortmarke" tabindex="-1" aria-label="Ruhepol">RUHEPOL</h1>
+      <a class="symbol-knopf" href="#einstellungen" aria-label="Einstellungen">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>
+        </svg>
+      </a>
+    </header>
 
     <div class="start-mitte">
-      <h1 id="start-titel" class="titel" tabindex="-1">Hier entsteht dein Ruhepol.</h1>
-      <p class="gedaempft">Der große Ruhe-Knopf kommt im nächsten Bauschritt.</p>
+      <!-- Der Notfallknopf: einmal tippen startet sofort, ohne Auswahl. -->
+      <button class="ruhe-knopf" id="ruhe-knopf" type="button">
+        <span class="ruhe-knopf-titel">Ich brauche jetzt Ruhe</span>
+        <span class="ruhe-knopf-neben">einmal tippen – mehr nicht</span>
+      </button>
       <!-- Zeigt den echten Stand der Offline-Kopie (app.js), nicht vorab ein Versprechen. -->
       <p class="offline-status" id="offline-status" data-zustand="pruefung" aria-live="polite">Offline-Kopie wird geprüft …</p>
     </div>
 
-    <nav class="zeilen" aria-label="Bereiche">
-      <a class="zeile" href="#einstellungen">
+    <!-- Die drei ruhigen Zugänge. Noch nicht gebaut – darum keine Links, sondern ein ehrlicher Hinweis. -->
+    <ul class="zeilen" aria-label="Weitere Bereiche">
+      <li class="zeile zeile-folgt">
         <span class="zeile-text">
-          <span class="zeile-titel">Einstellungen</span>
-          <span class="zeile-neben">Farbwelt wählen</span>
+          <span class="zeile-titel">Vorbeugen &amp; Trainieren</span>
+          <span class="zeile-neben">Übungen für ruhige Zeiten · folgt in Bauschritt 8</span>
         </span>
-        <svg class="pfeil" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
-      </a>
-    </nav>
+      </li>
+      <li class="zeile zeile-folgt">
+        <span class="zeile-text">
+          <span class="zeile-titel">Mein Koffer</span>
+          <span class="zeile-neben">Stimme, Atmung, Klang · folgt in Bauschritt 6</span>
+        </span>
+      </li>
+      <li class="zeile zeile-folgt">
+        <span class="zeile-text">
+          <span class="zeile-titel">Fahrmodus</span>
+          <span class="zeile-neben">Nur Stimme und Klang · folgt in Bauschritt 9</span>
+        </span>
+      </li>
+    </ul>
+  </main>
+
+  <!-- ============ Ansicht: Akuthilfe ============ -->
+  <main class="ansicht ansicht-akut" id="akut" data-ansicht="akut" aria-labelledby="akut-titel" hidden>
+    <h1 id="akut-titel" class="nur-vorlesen" tabindex="-1">Ruhe-Ablauf</h1>
+
+    <div class="fortschritt">
+      <ol class="punkte" id="akut-punkte" aria-hidden="true">
+        <li></li><li></li><li></li><li></li><li></li>
+      </ol>
+      <p class="phase-wort" id="phase-wort" aria-hidden="true">Ankommen</p>
+      <!-- Ansagen für VoiceOver: Phase mit Satz, dazu Atemtakt und Erdungsaufgaben -->
+      <p class="nur-vorlesen" id="phase-vorlesen" aria-live="polite"></p>
+      <p class="nur-vorlesen" id="takt-vorlesen" aria-live="polite"></p>
+    </div>
+
+    <!-- Ablauf (Phasen 1–4) -->
+    <div class="akut-ablauf" id="akut-ablauf">
+      <!-- Ab Bauschritt 4 spricht hier die vertraute Stimme. Bis dahin feste Sätze zum Mitlesen. -->
+      <p class="akut-satz" id="akut-satz"></p>
+
+      <div class="atem-gruppe">
+        <div class="atem">
+          <div class="atem-ring" aria-hidden="true">
+            <div class="atem-kreis" id="atem-kreis"></div>
+          </div>
+          <p class="atem-wort" id="atem-wort"></p>
+        </div>
+        <p class="atem-takt" id="atem-takt"></p>
+      </div>
+    </div>
+
+
+    <!-- Abschluss: eine Frage, drei Knöpfe -->
+    <section class="abschluss" id="abschluss" aria-labelledby="abschluss-frage" hidden>
+      <h2 class="titel" id="abschluss-frage" tabindex="-1">Wie geht es dir jetzt?</h2>
+      <div class="abschluss-knoepfe">
+        <button class="pill pill-akzent" id="abschluss-ruhiger" type="button">Etwas ruhiger</button>
+        <button class="pill pill-rand" id="abschluss-nochmal" type="button">Noch eine Runde atmen</button>
+        <a class="pill pill-hilfe" href="#hilfe">Ich brauche Hilfe</a>
+      </div>
+    </section>
   </main>
 
   <!-- ============ Ansicht: Einstellungen ============ -->
@@ -118,7 +183,7 @@
       Zurück
     </a>
     <h1 id="hilfe-titel" class="titel" tabindex="-1">Du bist nicht allein.</h1>
-    <p class="gedaempft">Hier erreichst du sofort einen Menschen. Tippe, um anzurufen.</p>
+    <p class="gedaempft">Hier kannst du anrufen. Tippe auf eine Nummer.</p>
 
     <div class="anrufe">
       <a class="anruf anruf-notruf" href="tel:112">
@@ -141,6 +206,13 @@
 
     <p class="hinweis">Ruhepol begleitet und beruhigt. Es ersetzt keine ärztliche Behandlung und keine Therapie. Neue oder ungewohnte körperliche Beschwerden – etwa Brustschmerz oder Atemnot – lass bitte zuerst ärztlich abklären.</p>
   </main>
+
+  <!-- ============ Akuthilfe: „Sanft beenden“ ============ -->
+  <!-- Liegt wie der Hilfe-Knopf direkt im body (nicht in der Ansicht), damit seine feste
+       Position immer am Bildschirm hängt. Sichtbar nur während des Ablaufs (akut.js). -->
+  <div class="akut-unten" id="akut-unten" hidden>
+    <button class="pill pill-rand" id="sanft-beenden" type="button">Sanft beenden</button>
+  </div>
 
   <!-- ============ Hilfe-Knopf: auf jeder Ansicht ============ -->
   <a class="hilfe-pill" href="#hilfe" id="hilfe-pill">

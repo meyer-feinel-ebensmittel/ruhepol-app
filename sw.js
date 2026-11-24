@@ -11,14 +11,15 @@
 
   Neue Version (Befund Codex Runde 2, Nr. 2):
     Sie wird im Hintergrund vollständig abgelegt und wartet dann. Übernommen wird
-    sie erst, wenn die App „uebernehmen“ schickt – das tut sie nur in einem ruhigen
-    Moment, nie mitten in einem Ablauf. Danach lädt die App einmal neu.
+    sie erst, wenn die App „uebernehmen“ schickt – das tut sie nur beim Öffnen, bevor
+    jemand tippt (Codex Runde 3). Danach lädt die App einmal neu – aber nie, wenn schon
+    getippt wurde; dann gilt die neue Version ab dem nächsten Öffnen.
 */
 "use strict";
 
 // Präfix schützt Ablagen anderer Seiten derselben Adresse (z. B. des Technik-Tests).
 const PRAEFIX = "ruhepol-";
-const VERSION = `${PRAEFIX}s2-v4`;
+const VERSION = `${PRAEFIX}s3-v2`;
 // Liegt erst in der Ablage, wenn alle Dateien drin sind – die App liest daran „startklar“ ab.
 const MARKE = "./offline-bereit";
 const DATEIEN = [
@@ -27,6 +28,8 @@ const DATEIEN = [
   "./css/ruhepol.css",
   "./js/farbwelt-frueh.js",
   "./js/app.js",
+  "./js/akut.js",
+  "./js/ton.js",
   "./schrift/Manrope-Variable.ttf",
   "./manifest.webmanifest",
   "./icon-180.png",

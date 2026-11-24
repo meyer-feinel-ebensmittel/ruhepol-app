@@ -45,6 +45,9 @@
   --inaktiv-punkt: #55688A;
   --inaktiv-rand: #2C3A55;
   --fokus: #F6D9A8;
+  --akzent-rgb: 233, 184, 114;   /* Schein um den Hauptknopf */
+  --atem-rgb: 143, 180, 227;     /* Atemkreis (Zweitfarbe) */
+  --rand-stark: rgba(234, 240, 248, .28);
   color-scheme: dark;
 }
 
@@ -71,6 +74,9 @@
   --inaktiv-punkt: #A8957D;
   --inaktiv-rand: #DCCDB6;
   --fokus: #8A4524;
+  --akzent-rgb: 201, 121, 77;
+  --atem-rgb: 168, 94, 54;
+  --rand-stark: rgba(58, 46, 34, .30);
   color-scheme: light;
 }
 
@@ -97,11 +103,17 @@
   --inaktiv-punkt: #557A62;
   --inaktiv-rand: #2A4436;
   --fokus: #CBE3C6;
+  --akzent-rgb: 159, 196, 164;
+  --atem-rgb: 169, 205, 176;
+  --rand-stark: rgba(233, 241, 233, .28);
   color-scheme: dark;
 }
 
 /* ---------- 3. Grundlagen ---------- */
 *, *::before, *::after { box-sizing: border-box; }
+
+/* „hidden“ blendet immer aus – auch wenn ein Bauteil display: flex/grid hat. */
+[hidden] { display: none !important; }
 
 html {
   /* Platz unten, damit der feste Hilfe-Knopf nie ein angesteuertes Element verdeckt.
@@ -134,7 +146,7 @@ a { color: var(--akzent-schrift); }
   outline-offset: 3px;
   border-radius: 12px;
 }
-.titel:focus { outline: none; }   /* Überschrift bekommt Fokus nur zum Vorlesen */
+h1:focus, h2:focus { outline: none; }   /* Überschriften bekommen Fokus nur zum Vorlesen */
 
 .nur-vorlesen {
   position: absolute;
@@ -158,8 +170,9 @@ a { color: var(--akzent-schrift); }
 }
 /* Sanftes Einblenden nur beim Wechsel zwischen Ansichten – beim Öffnen der App
    ist alles sofort da (im Notfall zählt jede Zehntelsekunde). */
-.ansicht.wechsel { animation: einblenden .32s ease-out both; }
-.ansicht[hidden] { display: none; }
+/* ohne „both“: nach dem Einblenden bleibt keine Verschiebung am Element hängen
+   (sie würde sonst feste Elemente darin an der Ansicht statt am Bildschirm ausrichten). */
+.ansicht.wechsel { animation: einblenden .32s ease-out; }
 
 @keyframes einblenden {
   from { opacity: 0; transform: translateY(6px); }
@@ -383,6 +396,234 @@ a { color: var(--akzent-schrift); }
   /* darf umbrechen (große Schrift, schmale Geräte); der Platz darunter wächst mit */
 }
 .hilfe-pill svg { width: 20px; height: 20px; flex: none; }
+
+/* ================= Bauschritt 3: Start mit Notfallknopf ================= */
+
+.start-kopf {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+}
+.start-kopf .wortmarke { margin: 0; }
+.symbol-knopf {
+  display: grid;
+  place-items: center;
+  width: 44px; height: 44px;
+  border-radius: 22px;
+  color: var(--gedaempft);
+}
+.symbol-knopf svg {
+  width: 22px; height: 22px;
+  fill: none; stroke: currentColor; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.ansicht-start .start-mitte { padding: 24px 0 28px; align-items: center; }
+
+/* Der große Knopf: warm leuchtender Kreis (design.md: 286 px, Schein, 22px/700) */
+.ruhe-knopf {
+  --groesse: min(286px, 74vw, 46dvh);
+  width: var(--groesse);
+  height: var(--groesse);
+  border-radius: 50%;
+  border: 0;
+  padding: 0 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--auf-akzent);
+  background: radial-gradient(circle at 50% 42%, var(--akzent-hell) 0%, var(--akzent) 62%, var(--akzent-tief) 100%);
+  box-shadow:
+    0 0 90px 18px rgba(var(--akzent-rgb), .22),
+    0 18px 50px rgba(0, 0, 0, .45);
+  transition: transform .15s ease-out;
+  touch-action: manipulation;          /* kein Zoom bei schnellem Doppeltippen */
+}
+[data-farbwelt="sand"] .ruhe-knopf {
+  box-shadow: 0 0 90px 18px rgba(var(--akzent-rgb), .22), 0 18px 40px rgba(58, 46, 34, .22);
+}
+.ruhe-knopf:active { transform: scale(.97); }
+.ruhe-knopf:focus-visible { outline-offset: 6px; border-radius: 50%; }
+.ruhe-knopf-titel { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.ruhe-knopf-neben { font-size: 13px; font-weight: 500; color: var(--auf-akzent-neben); }
+
+.ansicht-start .offline-status { margin-top: 26px; }
+
+ul.zeilen { list-style: none; margin: 0; padding: 0; }
+.zeile-folgt { cursor: default; }
+.zeile-folgt:active { background: none; }
+
+/* ================= Bauschritt 3: Akuthilfe ================= */
+
+.ansicht-akut {
+  text-align: center;
+  /* unten Platz für zwei feste Knöpfe: „Sanft beenden“ und den Hilfe-Knopf */
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--hilfe-hoehe) + 120px);
+}
+.akut-unten {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom) + 18px + var(--hilfe-hoehe) + 12px);
+  z-index: 20;
+  width: min(calc(100% - 48px), 420px);
+}
+/* deckende Fläche, falls auf sehr kleinen Geräten Inhalt darunter durchscrollt */
+.akut-unten .pill-rand { background: var(--bg-3); }
+
+.fortschritt { padding-top: 6px; }
+.punkte {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.punkte li {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--inaktiv-punkt);
+  transition: background-color .6s ease;
+}
+.punkte li[data-zustand="fertig"] { background: var(--zweit); }
+.punkte li[data-zustand="aktiv"] { background: var(--akzent); }
+.phase-wort {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--label);
+}
+
+.akut-ablauf {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
+}
+.akut-satz {
+  margin: 0;
+  min-height: 3em;              /* Platz für zwei Zeilen: nichts springt beim Wechsel */
+  max-width: 30ch;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Atemkreis (design.md: Ring 300 px, Kreis 252 px, Schein in Zweitfarbe, scale .72 ↔ 1) */
+.atem {
+  --groesse: min(300px, 78vw, 42dvh);
+  position: relative;
+  width: var(--groesse);
+  height: var(--groesse);
+  flex: none;
+}
+.atem-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--atem-rgb), .30);
+}
+.atem-kreis {
+  position: absolute;
+  inset: 8%;                    /* 252 von 300 px */
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(var(--atem-rgb), .42) 0%,
+    rgba(var(--atem-rgb), .18) 52%,
+    rgba(var(--atem-rgb), .05) 70%,
+    rgba(var(--atem-rgb), 0) 72%);
+  transform: scale(.72);
+  will-change: transform, opacity;
+}
+.atem-wort {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0 18%;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+[data-phase="erden"] .atem-wort { font-size: 64px; font-weight: 700; }
+.atem-gruppe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.atem-takt {
+  margin: 0;
+  min-height: 1.5em;
+  font-size: 14px;
+  color: var(--gedaempft);
+}
+
+/* Pills (design.md: 54 px hoch, Radius 27) */
+.pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 420px;
+  min-height: 54px;
+  padding: 8px 20px;
+  border-radius: 27px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform .15s ease-out;
+}
+.pill:active { transform: scale(.98); }
+.pill-rand   { background: transparent; color: var(--text); border: 1px solid var(--rand-stark); }
+.pill-akzent { background: var(--akzent); color: var(--auf-akzent); border: 0; }
+.pill-hilfe  { background: var(--notruf-flaeche); color: var(--hilfe-text); border: 1px solid var(--hilfe-rand); }
+
+.abschluss {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.abschluss .titel { margin-bottom: 18px; }
+.abschluss-knoepfe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;                    /* genug Abstand für zitternde Finger */
+  width: 100%;
+}
+
+/* Niedrige Bildschirme (z. B. iPhone SE): In der Akuthilfe muss alles ohne Scrollen
+   sichtbar sein – vor allem „Sanft beenden“ und der Hilfe-Knopf. */
+@media (max-height: 700px) {
+  .ansicht-akut {
+    padding-top: calc(env(safe-area-inset-top) + 10px);
+    padding-bottom: calc(env(safe-area-inset-bottom) + var(--hilfe-hoehe) + 96px);
+  }
+  .akut-ablauf { gap: 8px; padding-top: 8px; }
+  .akut-unten { bottom: calc(env(safe-area-inset-bottom) + 18px + var(--hilfe-hoehe) + 8px); }
+  .akut-satz { font-size: 15px; }
+  .atem { --groesse: min(300px, 78vw, 33dvh); }
+  .atem-gruppe { gap: 8px; }
+  .phase-wort { margin-top: 6px; }
+}
 
 /* ---------- Weniger Bewegung, wenn im iPhone eingestellt ---------- */
 @media (prefers-reduced-motion: reduce) {

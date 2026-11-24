@@ -1,8 +1,10 @@
 /*
-  Ruhepol – Grundgerüst der App (Bauschritt 2)
+  Ruhepol – Steuerung der App (Bauschritte 2 und 3)
 
   Was diese Datei tut:
-    1. Ansichten:   zeigt Start, Einstellungen oder Hilfe – je nach #… in der Adresse.
+    1. Ansichten:   zeigt Start, Akuthilfe, Einstellungen oder Hilfe – je nach #… in der Adresse.
+                    Der große Knopf startet die Akuthilfe sofort (Ablauf: js/akut.js).
+                    Wer die Akuthilfe verlässt (Hilfe, Zurück-Geste), beendet sie sanft.
     2. Farbwelt:    Nachtblau (Standard), Sand, Waldgrün; die Wahl bleibt im Gerät gespeichert.
     3. Speicher:    bittet das System um dauerhaften Speicher (navigator.storage.persist).
                     Im iPhone-Test (Schritt 1) wurde er noch nicht gewährt. Safari entscheidet
@@ -10,25 +12,24 @@
                     jedem Start und nach der ersten Bedienung erneut, bis er gewährt ist.
                     Der Kasten „Speicher“ zeigt getrennt: Konnte Ruhepol speichern? Hat das
                     Gerät die dauerhafte Zusage gegeben?
-    4. Offline:     richtet die Offline-Kopie ein (sw.js). „Ohne Internet startklar“ steht erst
+    4. Offline:     richtet die Offline-Kopie ein (sw.js). „Startet sofort. Auch ohne Internet.“ steht erst
                     da, wenn die Kopie vollständig im Gerät liegt und die Seite steuert.
-                    Neue Versionen werden nur in einem ruhigen Moment übernommen – nie mitten
-                    in einem laufenden Ablauf (ab Bauschritt 3: data-ablauf="laeuft").
+                    Neue Versionen werden nur beim Öffnen übernommen, bevor jemand tippt –
+                    nie während der Benutzung (siehe Abschnitt 4).
     5. Hilfe-Knopf: Platz unter dem Inhalt richtet sich nach seiner echten Höhe
                     (große Schrift → Knopf bricht um → mehr Platz, nichts wird verdeckt).
 
-  Hinweis für die nächsten Bauschritte (Ergebnis iPhone-Test):
-    Vor jedem Abspielen von Ton  navigator.audioSession.type = "playback"  setzen,
-    wie im Technik-Test (Stummschalter und Lautsprecher haben damit funktioniert).
+  Ton: Vor jedem Abspielen  navigator.audioSession.type = "playback"  (Ergebnis iPhone-Test
+  Bauschritt 1) – das erledigt js/ton.js.
 
   Feste Regeln: keine Verbindung nach außen, Text nur über textContent (nie innerHTML).
 */
-"use strict";
+import * as akut from "./akut.js";
 
 // Muss zu VERSION in sw.js passen. Hochzählen, wenn sich eine Datei ändert.
-const BUILD = "s2-v4";
+const BUILD = "s3-v2";
 
-const ANSICHTEN = ["start", "einstellungen", "hilfe"];
+const ANSICHTEN = ["start", "akut", "einstellungen", "hilfe"];
 const FARBWELTEN = {
   nachtblau: { name: "Ruhiges Nachtblau", statusleiste: "#0D1522" },
   sand: { name: "Warme Sandtöne", statusleiste: "#F7F0E4" },
@@ -45,7 +46,15 @@ const $ = (sel) => document.querySelector(sel);
 /** Zeigt die Ansicht aus der Adresse (#start, #einstellungen, #hilfe). */
 function zeigeAnsicht({ fokus }) {
   const gewuenscht = location.hash.replace("#", "");
-  const name = ANSICHTEN.includes(gewuenscht) ? gewuenscht : "start";
+  let name = ANSICHTEN.includes(gewuenscht) ? gewuenscht : "start";
+
+  // Akuthilfe nur über den großen Knopf. Wer per Zurück/Vor oder Neuladen auf #akut landet,
+  // ohne dass ein Ablauf läuft, kommt zum Start (dort ist der Knopf).
+  if (name === "akut" && document.documentElement.dataset.ablauf !== "laeuft") {
+    history.replaceState(null, "", "#start");
+    name = "start";
+  }
+  if (name !== "akut") akut.verlasse();
 
   for (const el of document.querySelectorAll("[data-ansicht]")) {
     el.hidden = el.dataset.ansicht !== name;
@@ -54,7 +63,7 @@ function zeigeAnsicht({ fokus }) {
   window.scrollTo(0, 0);
 
   // Für Vorlesen (VoiceOver): nach einem Wechsel die Überschrift ansagen.
-  if (fokus) $(`#${name} .titel`)?.focus({ preventScroll: true });
+  if (fokus) $(`#${name} h1`)?.focus({ preventScroll: true });
 
   if (name === "einstellungen") {
     zeigeFarbwahl();
@@ -68,6 +77,13 @@ function hilfeKnopfGetippt(ereignis) {
   ereignis.preventDefault();
   window.scrollTo(0, 0);
   $("#hilfe-titel").focus({ preventScroll: true });
+}
+
+/** Der große Knopf: Ablauf sofort starten – im selben Tipp, damit iOS den Ton freigibt. */
+function ruheKnopfGetippt() {
+  if (akut.laeuft()) return; // zweites schnelles Tippen startet nicht neu (Befund Codex Runde 3, Nr. 8)
+  akut.starte();
+  location.hash = "#akut";
 }
 
 /* ---------------- 2. Farbwelt ---------------- */
@@ -212,7 +228,7 @@ async function zeigeOfflineStatus() {
     el.textContent = "Dieses Gerät kann keine Offline-Kopie anlegen. Ruhepol braucht hier Internet.";
     el.dataset.zustand = "nicht-moeglich";
   } else if (await offlineBereit()) {
-    el.textContent = "Ohne Internet startklar.";
+    el.textContent = "Startet sofort. Auch ohne Internet.";
     el.dataset.zustand = "bereit";
   } else {
     el.textContent = "Die Offline-Kopie wird vorbereitet. Lass Ruhepol dafür einmal kurz mit Internet geöffnet.";
@@ -220,14 +236,29 @@ async function zeigeOfflineStatus() {
   }
 }
 
-/** Ruhiger Moment = kein Ablauf läuft gerade. (Ab Bauschritt 3 setzt die Akuthilfe data-ablauf.) */
-function istRuhigerMoment() {
-  return document.documentElement.dataset.ablauf !== "laeuft";
+/*
+  Neue Versionen (Befund Codex Runde 3, Nr. 1 und 2):
+    - Übernommen wird nur beim Öffnen der App, solange noch niemand etwas angetippt hat.
+    - Kommt der Wechsel trotzdem erst nach der ersten Bedienung an, lädt die Seite NICHT neu.
+      Sie hat alle ihre Dateien schon geladen und läuft unverändert weiter; die neue Version
+      gilt ab dem nächsten Öffnen. So kann ein Update nie eine laufende Akuthilfe unterbrechen –
+      auch nicht, wenn ein zweites Fenster der App das Update freigibt.
+    - Während die App offen ist, wird nach Updates gesucht und vollständig abgelegt.
+*/
+let bedient = false;
+
+function merkeBedienung() {
+  const arten = ["pointerdown", "keydown"];
+  const einmal = () => {
+    bedient = true;
+    for (const art of arten) document.removeEventListener(art, einmal, true);
+  };
+  for (const art of arten) document.addEventListener(art, einmal, true);
 }
 
-/** Wartet eine neue Version, wird sie nur in einem ruhigen Moment übernommen. */
-function uebernimmNeueVersion(reg) {
-  if (reg.waiting && navigator.serviceWorker.controller && istRuhigerMoment()) {
+/** Beim Öffnen: Wartet eine neue Version und hat noch niemand getippt, jetzt übernehmen. */
+function uebernimmBeimOeffnen(reg) {
+  if (!bedient && reg.waiting && navigator.serviceWorker.controller) {
     reg.waiting.postMessage("uebernehmen");
   }
 }
@@ -237,19 +268,20 @@ async function richteOfflineKopieEin() {
     zeigeOfflineStatus();
     return;
   }
+  merkeBedienung();
   const hatteSteuerung = Boolean(navigator.serviceWorker.controller);
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (!hatteSteuerung) {
       zeigeOfflineStatus(); // erste Einrichtung fertig: nichts neu laden
       return;
     }
-    // Neue Version übernommen: einmal neu laden, damit nur noch neue Dateien laufen.
+    // Schutz direkt vor dem Neuladen: nie, wenn schon getippt wurde oder ein Ablauf läuft.
+    if (bedient || document.documentElement.dataset.ablauf === "laeuft") return;
     try {
       if (sessionStorage.getItem("ruhepol-neu-geladen") === BUILD) return; // Schleifenschutz
       sessionStorage.setItem("ruhepol-neu-geladen", BUILD);
     } catch {
-      // Ohne sessionStorage trotzdem neu laden – danach steuert die neue Version,
-      // ein weiterer Wechsel kommt erst mit der nächsten Version.
+      // Ohne sessionStorage trotzdem einmal neu laden – danach steuert die neue Version.
     }
     location.reload();
   });
@@ -259,19 +291,11 @@ async function richteOfflineKopieEin() {
     reg.addEventListener("updatefound", () => {
       const neu = reg.installing;
       neu?.addEventListener("statechange", () => {
-        if (neu.state === "installed") uebernimmNeueVersion(reg);
         if (neu.state === "activated") zeigeOfflineStatus();
       });
     });
-    uebernimmNeueVersion(reg);
+    uebernimmBeimOeffnen(reg);
     reg.update().catch(() => {}); // ohne Internet schlägt das still fehl – gewollt
-    // iPhone-Apps bleiben oft lange im Hintergrund: beim Zurückkommen nach Updates sehen.
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        reg.update().catch(() => {});
-        uebernimmNeueVersion(reg);
-      }
-    });
   } catch {
     // Ohne Offline-Kopie läuft die App trotzdem; beim nächsten Start wird es erneut versucht.
   }
@@ -294,7 +318,10 @@ function beobachteHilfeKnopf() {
 /* ---------------- Start ---------------- */
 
 function start() {
-  $("#version-zeile").textContent = `Ruhepol · Bauschritt 2 · ${BUILD}`;
+  $("#version-zeile").textContent = `Ruhepol · Bauschritt 3 · ${BUILD}`;
+
+  akut.richteEin();
+  $("#ruhe-knopf").addEventListener("click", ruheKnopfGetippt);
 
   for (const feld of document.querySelectorAll('input[name="farbwelt"]')) {
     feld.addEventListener("change", () => {
