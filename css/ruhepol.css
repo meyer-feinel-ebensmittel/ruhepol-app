@@ -1,0 +1,393 @@
+/*
+  Ruhepol – Grundgestaltung (Bauschritt 2)
+
+  Aufbau dieser Datei:
+    1. Schrift Manrope (lokale Datei, nie Google Fonts)
+    2. Farbwelten: alle Farben als Variablen. Die Bauteile darunter benutzen
+       nur diese Variablen – so wechselt die ganze App mit einem einzigen
+       Attribut am <html>-Element (data-farbwelt="nachtblau" | "sand" | "wald").
+    3. Grundlagen, Ansichten, Bauteile, Hilfe-Knopf
+  Werte aus design.md. Kontraste für jede Farbwelt nachgerechnet (mind. 4.5:1),
+  Sand-Werte für Nebentext, Zweitfarbe und Akzent-Schrift dafür abgedunkelt.
+*/
+
+/* ---------- 1. Schrift ---------- */
+@font-face {
+  font-family: "Manrope";
+  src: url("../schrift/Manrope-Variable.ttf") format("truetype");
+  font-weight: 200 800;   /* variable Schrift: eine Datei für alle Stärken */
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- 2. Farbwelten ---------- */
+:root,
+[data-farbwelt="nachtblau"] {
+  --bg-1: #0D1522;
+  --bg-2: #152238;
+  --bg-3: #1B2B47;
+  --text: #EAF0F8;
+  --gedaempft: #9DAFC9;
+  --label: #A7B8D1;
+  --akzent: #E9B872;
+  --akzent-hell: #F6D9A8;
+  --akzent-tief: #C58B3F;
+  --akzent-schrift: #E9B872;      /* Akzent als Schriftfarbe (Links) */
+  --auf-akzent: #241604;
+  --auf-akzent-neben: #4A3310;
+  --zweit: #8FB4E3;
+  --hilfe-text: #F4A299;
+  --hilfe-flaeche: #2D212B;       /* deckend: Koralle 14 % auf Grund – nichts scheint durch */
+  --hilfe-rand: rgba(240, 139, 128, .35);
+  --notruf-flaeche: rgba(240, 110, 96, .14);
+  --linie: rgba(234, 240, 248, .10);
+  --flaeche: rgba(234, 240, 248, .05);
+  --inaktiv-punkt: #55688A;
+  --inaktiv-rand: #2C3A55;
+  --fokus: #F6D9A8;
+  color-scheme: dark;
+}
+
+[data-farbwelt="sand"] {
+  --bg-1: #F7F0E4;
+  --bg-2: #F3E9D9;
+  --bg-3: #EFE2CE;
+  --text: #3A2E22;
+  --gedaempft: #65523E;
+  --label: #65523E;
+  --akzent: #C9794D;
+  --akzent-hell: #E0A077;
+  --akzent-tief: #A85E36;
+  --akzent-schrift: #8A4524;      /* #C9794D wäre als Schrift zu schwach (2.6:1) */
+  --auf-akzent: #241604;
+  --auf-akzent-neben: #2E1C0B;
+  --zweit: #74512F;
+  --hilfe-text: #9E3B2F;
+  --hilfe-flaeche: #EED7C8;
+  --hilfe-rand: rgba(200, 90, 74, .35);
+  --notruf-flaeche: rgba(200, 90, 74, .14);
+  --linie: rgba(58, 46, 34, .12);
+  --flaeche: rgba(58, 46, 34, .05);
+  --inaktiv-punkt: #A8957D;
+  --inaktiv-rand: #DCCDB6;
+  --fokus: #8A4524;
+  color-scheme: light;
+}
+
+[data-farbwelt="wald"] {
+  --bg-1: #12201A;
+  --bg-2: #172820;
+  --bg-3: #1D3128;
+  --text: #E9F1E9;
+  --gedaempft: #A9C2AF;
+  --label: #B2C9B7;
+  --akzent: #9FC4A4;
+  --akzent-hell: #CBE3C6;
+  --akzent-tief: #6F9A77;
+  --akzent-schrift: #9FC4A4;
+  --auf-akzent: #0F2016;
+  --auf-akzent-neben: #24402D;
+  --zweit: #A9CDB0;
+  --hilfe-text: #F4A299;
+  --hilfe-flaeche: #352E27;
+  --hilfe-rand: rgba(240, 139, 128, .35);
+  --notruf-flaeche: rgba(240, 110, 96, .14);
+  --linie: rgba(233, 241, 233, .10);
+  --flaeche: rgba(233, 241, 233, .05);
+  --inaktiv-punkt: #557A62;
+  --inaktiv-rand: #2A4436;
+  --fokus: #CBE3C6;
+  color-scheme: dark;
+}
+
+/* ---------- 3. Grundlagen ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  /* Platz unten, damit der feste Hilfe-Knopf nie ein angesteuertes Element verdeckt.
+     --hilfe-hoehe setzt app.js aus der echten Höhe des Knopfs (große Schrift → höher). */
+  --hilfe-hoehe: 54px;
+  scroll-padding-bottom: calc(env(safe-area-inset-bottom) + var(--hilfe-hoehe) + 42px);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--bg-1);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: linear-gradient(175deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3) 100%) fixed;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .5s ease, color .5s ease;
+}
+
+a { color: var(--akzent-schrift); }
+
+/* Sichtbarer Fokus für Tastatur und Schaltersteuerung – nie entfernen */
+:focus-visible {
+  outline: 2px solid var(--fokus);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+.titel:focus { outline: none; }   /* Überschrift bekommt Fokus nur zum Vorlesen */
+
+.nur-vorlesen {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Ansichten ---------- */
+.ansicht {
+  max-width: 520px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding:
+    calc(env(safe-area-inset-top) + 20px)
+    24px
+    calc(env(safe-area-inset-bottom) + var(--hilfe-hoehe) + 54px);   /* Platz für den Hilfe-Knopf */
+}
+/* Sanftes Einblenden nur beim Wechsel zwischen Ansichten – beim Öffnen der App
+   ist alles sofort da (im Notfall zählt jede Zehntelsekunde). */
+.ansicht.wechsel { animation: einblenden .32s ease-out both; }
+.ansicht[hidden] { display: none; }
+
+@keyframes einblenden {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.wortmarke {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  color: var(--gedaempft);
+}
+
+.titel {
+  margin: 8px 0 10px;
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+
+.gedaempft {
+  margin: 0;
+  color: var(--gedaempft);
+  font-size: 15px;
+}
+
+.label {
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--label);
+}
+
+.abschnitt { margin-top: 30px; }
+
+/* ---------- Start ---------- */
+.start-mitte {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 8px;
+}
+.start-mitte .gedaempft { max-width: 30ch; margin: 0 auto; }
+.offline-status {
+  margin: 14px auto 0;
+  max-width: 32ch;
+  font-size: 13.5px;
+  color: var(--gedaempft);
+}
+.offline-status[data-zustand="bereit"] { color: var(--zweit); font-weight: 600; }
+
+/* ---------- Zeilen mit Haarlinien (statt Kacheln) ---------- */
+.zeilen { border-top: 1px solid var(--linie); }
+
+.zeile,
+.auswahl-zeile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--linie);
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+.zeile:active,
+.auswahl-zeile:active { background: var(--flaeche); }
+
+.zeile-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.zeile-titel { margin: 0; font-size: 15px; font-weight: 600; }
+.zeile-neben { margin: 2px 0 0; font-size: 12.5px; color: var(--gedaempft); }
+
+.pfeil, .haken, .zurueck svg, .hilfe-pill svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pfeil { width: 20px; height: 20px; color: var(--gedaempft); flex: none; }
+
+/* ---------- Auswahl (Farbwelt) ---------- */
+.auswahl-liste {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid var(--linie);
+}
+.auswahl-zeile input {
+  /* echtes Radio-Feld bleibt für Vorlesen und Tastatur erhalten, nur unsichtbar */
+  position: absolute;
+  opacity: 0;
+  width: 1px; height: 1px;
+}
+.auswahl-zeile:has(input:focus-visible) {
+  outline: 2px solid var(--fokus);
+  outline-offset: -2px;
+  border-radius: 12px;
+}
+
+.muster {
+  flex: none;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--linie);
+}
+/* Vorschau-Kreise zeigen immer die echte Farbwelt, egal welche gerade aktiv ist */
+.muster-nachtblau { background: radial-gradient(circle at 50% 50%, #E9B872 0 22%, #152238 24% 100%); }
+.muster-sand      { background: radial-gradient(circle at 50% 50%, #C9794D 0 22%, #F3E9D9 24% 100%); }
+.muster-wald      { background: radial-gradient(circle at 50% 50%, #9FC4A4 0 22%, #172820 24% 100%); }
+
+.haken {
+  width: 22px; height: 22px;
+  flex: none;
+  color: var(--akzent-schrift);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.auswahl-zeile:has(input:checked) .haken { opacity: 1; }
+.auswahl-zeile:has(input:checked) .zeile-titel { color: var(--text); }
+
+/* ---------- Flächen, Hinweise ---------- */
+.flaeche {
+  background: var(--flaeche);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.fusszeile {
+  margin: auto 0 0;
+  padding-top: 32px;
+  font-size: 12.5px;
+  color: var(--gedaempft);
+  text-align: center;
+}
+
+/* ---------- Zurück ---------- */
+.zurueck {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 12px 0 2px;
+  margin-left: -4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--akzent-schrift);
+  text-decoration: none;
+}
+.zurueck svg { width: 20px; height: 20px; }
+
+/* ---------- Hilfe-Ansicht ---------- */
+.anrufe {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+}
+.anruf {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 72px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: var(--flaeche);
+  border: 1px solid var(--linie);
+  color: var(--text);
+  text-decoration: none;
+}
+.anruf-nummer { font-size: 20px; font-weight: 700; letter-spacing: .01em; }
+.anruf-text { font-size: 13px; color: var(--gedaempft); }
+.anruf-notruf {
+  background: var(--notruf-flaeche);
+  border-color: var(--hilfe-rand);
+}
+.anruf-notruf .anruf-nummer { color: var(--hilfe-text); font-size: 26px; }
+
+.hinweis {
+  margin: 28px 0 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--linie);
+  font-size: 13.5px;
+  color: var(--gedaempft);
+}
+
+/* ---------- Hilfe-Knopf (jede Ansicht) ---------- */
+.hilfe-pill {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 18px);
+  transform: translateX(-50%);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 54px;
+  width: min(calc(100% - 48px), 420px);
+  padding: 8px 18px;
+  border-radius: 27px;
+  background: var(--hilfe-flaeche);
+  border: 1px solid var(--hilfe-rand);
+  color: var(--hilfe-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: none;
+  /* darf umbrechen (große Schrift, schmale Geräte); der Platz darunter wächst mit */
+}
+.hilfe-pill svg { width: 20px; height: 20px; flex: none; }
+
+/* ---------- Weniger Bewegung, wenn im iPhone eingestellt ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

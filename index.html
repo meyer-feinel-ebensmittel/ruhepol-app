@@ -1,0 +1,155 @@
+<!doctype html>
+<!--
+  Ruhepol – Grundgerüst (Bauschritt 2 des Arbeitsplans)
+
+  Eine einzige Seite mit drei Ansichten: Start, Einstellungen, Hilfe.
+  Welche Ansicht sichtbar ist, steht hinten in der Adresse (#start, #einstellungen, #hilfe).
+  So funktioniert auch die Zurück-Geste des iPhones.
+
+  Feste Regeln, die hier sichtbar werden:
+    - Keine Verbindung nach außen: Die Content-Security-Policy erlaubt nur eigene Dateien.
+      Die Schrift Manrope liegt im Ordner schrift/ – kein Google-Fonts-Link.
+    - Der Hilfe-Knopf (Notruf 112, Telefonseelsorge) steht unten auf jeder Ansicht.
+    - Kein Text verspricht Heilung oder Behandlung.
+-->
+<html lang="de" data-farbwelt="nachtblau">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self' blob:; connect-src 'self'; font-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0D1522">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Ruhepol">
+  <title>Ruhepol</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" type="image/png" href="icon-180.png">
+  <link rel="preload" href="schrift/Manrope-Variable.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="css/ruhepol.css">
+  <!-- Setzt die gewählte Farbwelt, bevor etwas gezeichnet wird (kein kurzes Aufblitzen). -->
+  <script src="js/farbwelt-frueh.js"></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+
+  <!-- ============ Ansicht: Start ============ -->
+  <main class="ansicht" id="start" data-ansicht="start" aria-labelledby="start-titel">
+    <p class="wortmarke">RUHEPOL</p>
+
+    <div class="start-mitte">
+      <h1 id="start-titel" class="titel" tabindex="-1">Hier entsteht dein Ruhepol.</h1>
+      <p class="gedaempft">Der große Ruhe-Knopf kommt im nächsten Bauschritt.</p>
+      <!-- Zeigt den echten Stand der Offline-Kopie (app.js), nicht vorab ein Versprechen. -->
+      <p class="offline-status" id="offline-status" data-zustand="pruefung" aria-live="polite">Offline-Kopie wird geprüft …</p>
+    </div>
+
+    <nav class="zeilen" aria-label="Bereiche">
+      <a class="zeile" href="#einstellungen">
+        <span class="zeile-text">
+          <span class="zeile-titel">Einstellungen</span>
+          <span class="zeile-neben">Farbwelt wählen</span>
+        </span>
+        <svg class="pfeil" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+      </a>
+    </nav>
+  </main>
+
+  <!-- ============ Ansicht: Einstellungen ============ -->
+  <main class="ansicht" id="einstellungen" data-ansicht="einstellungen" aria-labelledby="einst-titel" hidden>
+    <a class="zurueck" href="#start">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      Zurück
+    </a>
+    <h1 id="einst-titel" class="titel" tabindex="-1">Einstellungen</h1>
+
+    <section class="abschnitt" aria-labelledby="fw-label">
+      <h2 id="fw-label" class="label">Farbwelt</h2>
+      <fieldset class="auswahl-liste">
+        <legend class="nur-vorlesen">Farbwelt wählen</legend>
+        <label class="auswahl-zeile">
+          <input type="radio" name="farbwelt" value="nachtblau">
+          <span class="muster muster-nachtblau" aria-hidden="true"></span>
+          <span class="zeile-text">
+            <span class="zeile-titel">Ruhiges Nachtblau</span>
+            <span class="zeile-neben">Standard · dunkel und still</span>
+          </span>
+          <svg class="haken" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        </label>
+        <label class="auswahl-zeile">
+          <input type="radio" name="farbwelt" value="sand">
+          <span class="muster muster-sand" aria-hidden="true"></span>
+          <span class="zeile-text">
+            <span class="zeile-titel">Warme Sandtöne</span>
+            <span class="zeile-neben">hell und weich</span>
+          </span>
+          <svg class="haken" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        </label>
+        <label class="auswahl-zeile">
+          <input type="radio" name="farbwelt" value="wald">
+          <span class="muster muster-wald" aria-hidden="true"></span>
+          <span class="zeile-text">
+            <span class="zeile-titel">Gedecktes Waldgrün</span>
+            <span class="zeile-neben">dunkel und naturnah</span>
+          </span>
+          <svg class="haken" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        </label>
+      </fieldset>
+    </section>
+
+    <section class="abschnitt" aria-labelledby="sp-label">
+      <h2 id="sp-label" class="label">Speicher</h2>
+      <div class="flaeche" id="speicher-kasten" data-zustand="pruefung">
+        <p class="zeile-titel" id="speicher-status" aria-live="polite">Wird geprüft …</p>
+        <p class="zeile-neben" id="speicher-hinweis"></p>
+      </div>
+    </section>
+
+    <p class="fusszeile" id="version-zeile"></p>
+  </main>
+
+  <!-- ============ Ansicht: Hilfe ============ -->
+  <main class="ansicht" id="hilfe" data-ansicht="hilfe" aria-labelledby="hilfe-titel" hidden>
+    <a class="zurueck" href="#start">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      Zurück
+    </a>
+    <h1 id="hilfe-titel" class="titel" tabindex="-1">Du bist nicht allein.</h1>
+    <p class="gedaempft">Hier erreichst du sofort einen Menschen. Tippe, um anzurufen.</p>
+
+    <div class="anrufe">
+      <a class="anruf anruf-notruf" href="tel:112">
+        <span class="anruf-nummer">112</span>
+        <span class="anruf-text">Notruf · bei Gefahr für Leib und Leben</span>
+      </a>
+      <a class="anruf" href="tel:08001110111">
+        <span class="anruf-nummer">0800 111 0 111</span>
+        <span class="anruf-text">Telefonseelsorge · kostenlos, rund um die Uhr</span>
+      </a>
+      <a class="anruf" href="tel:08001110222">
+        <span class="anruf-nummer">0800 111 0 222</span>
+        <span class="anruf-text">Telefonseelsorge · zweite Nummer</span>
+      </a>
+      <a class="anruf" href="tel:116123">
+        <span class="anruf-nummer">116 123</span>
+        <span class="anruf-text">Seelsorge-Nummer · europaweit</span>
+      </a>
+    </div>
+
+    <p class="hinweis">Ruhepol begleitet und beruhigt. Es ersetzt keine ärztliche Behandlung und keine Therapie. Neue oder ungewohnte körperliche Beschwerden – etwa Brustschmerz oder Atemnot – lass bitte zuerst ärztlich abklären.</p>
+  </main>
+
+  <!-- ============ Hilfe-Knopf: auf jeder Ansicht ============ -->
+  <a class="hilfe-pill" href="#hilfe" id="hilfe-pill">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/>
+      <path d="M6 6l3.5 3.5M18 6l-3.5 3.5M6 18l3.5-3.5M18 18l-3.5-3.5"/>
+    </svg>
+    Hilfe · Notruf 112 · Telefonseelsorge
+  </a>
+
+</body>
+</html>
